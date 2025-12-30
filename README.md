@@ -2,7 +2,8 @@
 
 CapitalSheets - Financial Statement Classifier
 
-<img width="1237" height="1295" alt="Screenshot (70)" src="https://github.com/user-attachments/assets/244a1dd6-2c89-4c58-b074-e8dab1bcb928" />
+<img width="1237" height="1295" alt="Screenshot (70)" src="https://github.com/user-attachments/assets/b7c6df4d-38dd-4880-a70d-f1a16ee7685a" />
+
 
 # Overview
 CapitalSheets is a Django-based web application powered by a Multi-Layer Perceptron (MLP) neural network designed to automatically identify and classify financial tables as Balance Sheets, Income Statements, or Cash Flow Statements. 
