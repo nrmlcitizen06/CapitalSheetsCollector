@@ -1,0 +1,253 @@
+<!-- Power/templates/Power/result.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scan Result</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body class="bg-light">
+
+    <h2 class="mb-4">Scan SEC Filing</h2>
+    {% if error_message %}
+    <p class="text-danger mt-2">{{ error_message }}</p>
+    {% endif %}
+<!-- RAW INPUT BAR - NO DJANGO FORM CUSTOMIZATION -->
+    <div class="container py-5">
+        <div class="p-4 bg-white rounded shadow">
+            <h2 class="mb-4">Scan SEC Filing</h2>
+                
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <input type="text" name="url" class="form-control form-control-lg" 
+                            placeholder="https://www.sec.gov/Archives/edgar/data/..." 
+                            value="{{ form.url.value|default:'' }}" >
+                        <button type="submit" class="btn btn-primary btn-lg">Scan URL</button>
+                    </div>
+                    {% if form.url.errors %}
+                        <div class="text-danger mt-2">{{ form.url.errors }}</div>
+                    {% endif %}
+                </form>
+
+            <!-- Show errors if any -->
+            {% if form.url.errors %}
+                <div style="color: red; margin-top: 10px;">
+                    {{ form.url.errors }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+    <div class="container mt-4">
+        <h1>Scan Result</h1>
+        <strong>URL:</strong> {{ scanned_url }}
+        
+        <h3>Neural Net Classification</h3>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Sheet Type</th>
+                    <th>Indexes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in results_list %}
+                    <tr>
+                        <td>{{ item.sheet_type }}</td>
+                        <td>{{ item.indexes }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="2">No results found</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>Processed Financial Table (Index {{ selected_index }} of {{ total_tables|add:"-1" }})</h3>
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background-color: #f9f9f9;">
+        {{ selected_table_html|safe }}
+        </div>
+
+<!-- Navigation Controls -->
+            <div class="nav-controls">
+                <!-- Arrow Buttons -->
+                <div class="d-flex justify-content-center align-items-center gap-4 mb-4 flex-wrap">
+                    <div>
+                        {% if selected_index > 0 %}
+                            <a href="?index={{ selected_index|add:-1 }}{% if request.GET.show_list %}&show_list=1{% endif %}"
+                               class="btn btn-outline-primary btn-lg">← Previous Table</a>
+                        {% else %}
+                            <button class="btn btn-outline-secondary btn-lg" disabled>← Previous</button>
+                        {% endif %}
+                    </div>
+
+                    <div class="fw-bold fs-4 text-primary">
+                        Table {{ selected_index }} of {{ total_tables|add:-1 }}
+                    </div>
+
+                    <div>
+                        {% if selected_index < total_tables|add:-1 %}
+                            <a href="?index={{ selected_index|add:1 }}{% if request.GET.show_list %}&show_list=1{% endif %}"
+                               class="btn btn-outline-primary btn-lg">Next Table →</a>
+                        {% else %}
+                            <button class="btn btn-outline-secondary btn-lg" disabled>Next Table →</button>
+                        {% endif %}
+                    </div>
+                </div>
+
+        <!-- Single-table index input -->
+        {% if total_tables > 1 %}
+            <div class="mt-3">
+                <form method="get">
+                    <label for="index_input">Enter Index to View (0 to {{ total_tables|add:"-1" }}):</label>
+                    <input type="number" name="index" id="index_input" class="form-control d-inline-block w-auto" min="0" max="{{ total_tables|add:"-1" }}" value="{{ selected_index }}" required>
+                    <button type="submit" class="btn btn-primary">Update Table</button>
+                </form>
+            </div>
+        {% endif %}
+        
+        <h3>Add Table to Lists</h3>
+        {% if total_tables > 1 %}
+            <div class="mt-3">
+                <!-- Add to Balance -->
+                <form method="post" class="mb-2">
+                    {% csrf_token %}
+                    <label for="balance_index_input">Add to Balance Sheets (0 to {{ total_tables|add:"-1" }}):</label>
+                    <input type="number" name="index" id="balance_index_input" class="form-control d-inline-block w-auto" min="0" max="{{ total_tables|add:"-1" }}" required>
+                    <button type="submit" name="action" value="add_balance" class="btn btn-success">Add to Balance</button>
+                </form>
+                <!-- Add to Income -->
+                <form method="post" class="mb-2">
+                    {% csrf_token %}
+                    <label for="income_index_input">Add to Income Sheets (0 to {{ total_tables|add:"-1" }}):</label>
+                    <input type="number" name="index" id="income_index_input" class="form-control d-inline-block w-auto" min="0" max="{{ total_tables|add:"-1" }}" required>
+                    <button type="submit" name="action" value="add_income" class="btn btn-success">Add to Income</button>
+                </form>
+                <!-- Add to Cashflow -->
+                <form method="post" class="mb-2">
+                    {% csrf_token %}
+                    <label for="cashflow_index_input">Add to Cashflow Sheets (0 to {{ total_tables|add:"-1" }}):</label>
+                    <input type="number" name="index" id="cashflow_index_input" class="form-control d-inline-block w-auto" min="0" max="{{ total_tables|add:"-1" }}" required>
+                    <button type="submit" name="action" value="add_cashflow" class="btn btn-success">Add to Cashflow</button>
+                </form>
+                {% if error_message %}
+                    <p class="text-danger mt-2">{{ error_message }}</p>
+                {% endif %}
+            </div>
+        {% else %}
+            <p>No tables available</p>
+        {% endif %}
+
+<h3>Selected Tables</h3>
+{% if total_tables > 1 %}
+    <div class="mt-3">
+        <!-- Tab navigation -->
+        <ul class="nav nav-tabs" id="selectedTablesTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="balance-tab" data-bs-toggle="tab" data-bs-target="#balance-tab-pane" type="button" role="tab" aria-controls="balance-tab-pane" aria-selected="false">View Balance Sheets</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="income-tab" data-bs-toggle="tab" data-bs-target="#income-tab-pane" type="button" role="tab" aria-controls="income-tab-pane" aria-selected="false">View Income Sheets</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="cashflow-tab" data-bs-toggle="tab" data-bs-target="#cashflow-tab-pane" type="button" role="tab" aria-controls="cashflow-tab-pane" aria-selected="false">View Cashflow Sheets</button>
+            </li>
+        </ul>
+
+        <!-- Tab content -->
+        <div class="tab-content" id="selectedTablesTabContent">
+            <!-- Selected Tables Tab (shows all sections) -->
+            <div class="tab-pane fade show active" id="selected-tab-pane" role="tabpanel" aria-labelledby="selected-tab" tabindex="0">
+                <!-- Balance Sheets Section -->
+            </div>
+
+            <!-- Balance Sheets Tab -->
+            <div class="tab-pane fade" id="balance-tab-pane" role="tabpanel" aria-labelledby="balance-tab" tabindex="0">
+                <h4>Balance Sheets</h4>
+                <form method="post" class="d-inline mb-3">
+                    {% csrf_token %}
+                    <button type="submit" name="action" value="export_balance" class="btn btn-secondary">Export Balance to CSV</button>
+                </form>
+                {% for table in table_html_balance %}
+                    <div class="mb-4">
+                        <h5>{{ table.title }}</h5>
+                        {{ table.html|safe }}
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="bal_index" value="{{ table.index }}">
+                            <button type="submit" name="action" value="remove_bal" class="btn btn-danger btn-sm">Remove</button>
+                        </form>
+                    </div>
+                {% empty %}
+                    <p>No balance sheets selected</p>
+                {% endfor %}
+            </div>
+
+            <!-- Income Sheets Tab -->
+            <div class="tab-pane fade" id="income-tab-pane" role="tabpanel" aria-labelledby="income-tab" tabindex="0">
+                <h4>Income Sheets</h4>
+                <form method="post" class="d-inline mb-3">
+                    {% csrf_token %}
+                    <button type="submit" name="action" value="export_income" class="btn btn-secondary">Export Income to CSV</button>
+                </form>
+                {% for table in table_html_income %}
+                    <div class="mb-4">
+                        <h5>{{ table.title }}</h5>
+                        {{ table.html|safe }}
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="inc_index" value="{{ table.index }}">
+                            <button type="submit" name="action" value="remove_inc" class="btn btn-danger btn-sm">Remove</button>
+                        </form>
+                    </div>
+                {% empty %}
+                    <p>No income sheets selected</p>
+                {% endfor %}
+            </div>
+
+            <!-- Cashflow Sheets Tab -->
+            <div class="tab-pane fade" id="cashflow-tab-pane" role="tabpanel" aria-labelledby="cashflow-tab" tabindex="0">
+                <h4>Cashflow Sheets</h4>
+                <form method="post" class="d-inline mb-3">
+                    {% csrf_token %}
+                    <button type="submit" name="action" value="export_cashflow" class="btn btn-secondary">Export Cashflow to CSV</button>
+                </form>
+                {% for table in table_html_cashflow %}
+                    <div class="mb-4">
+                        <h5>{{ table.title }}</h5>
+                        {{ table.html|safe }}
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="cas_index" value="{{ table.index }}">
+                            <button type="submit" name="action" value="remove_cash" class="btn btn-danger btn-sm">Remove</button>
+                        </form>
+                    </div>
+                {% empty %}
+                    <p>No cashflow sheets selected</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% else %}
+    <p>No tables available</p>
+{% endif %}
+        <form method="post" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit" name="action" value="reset" class="btn btn-danger">
+        Reset Cache / Data
+    </button>
+</form>
+        <a href="{% url 'result' %}" class="btn btn-primary mt-3">Scan Another</a>
+    </div>
+</body>
+</html>
